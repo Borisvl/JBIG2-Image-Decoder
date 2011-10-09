@@ -59,7 +59,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Iterator;
 import java.util.List;
 
 import org.jpedal.jbig2.decoders.JBIG2StreamDecoder;
@@ -194,9 +193,8 @@ public class JBIG2Decoder {
 
 		int noOfPages = 0;
 
-		List segments = getAllSegments();
-		for (Iterator it = segments.iterator(); it.hasNext();) {
-			Segment segment = (Segment) it.next();
+		List<Segment> segments = getAllSegments();
+		for (Segment segment : segments) {
 			if (segment.getSegmentHeader().getSegmentType() == Segment.PAGE_INFORMATION)
 				noOfPages++;
 		}
@@ -204,7 +202,7 @@ public class JBIG2Decoder {
 		return noOfPages;
 	}
 
-	public List getAllSegments() {
+	public List<Segment> getAllSegments() {
 		return streamDecoder.getAllSegments();
 	}
 

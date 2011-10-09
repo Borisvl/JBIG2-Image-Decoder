@@ -155,9 +155,9 @@ public class ArithmeticDecoder {
 		buffer0 = reader.readByte();
 		buffer1 = reader.readByte();
 
-		c = BinaryOperation.bit32Shift((buffer0 ^ 0xff), 16, BinaryOperation.LEFT_SHIFT);
+		c = BinaryOperation.bit32ShiftL((buffer0 ^ 0xff), 16);
 		readByte();
-		c = BinaryOperation.bit32Shift(c, 7, BinaryOperation.LEFT_SHIFT);
+		c = BinaryOperation.bit32ShiftL(c, 7);
 		counter -= 7;
 		a = 0x80000000l;
 	}
@@ -174,40 +174,40 @@ public class ArithmeticDecoder {
 						if (decodeIntBit(stats) != 0) {
 							value = 0;
 							for (int i = 0; i < 32; i++) {
-								value = BinaryOperation.bit32Shift(value, 1, BinaryOperation.LEFT_SHIFT) | decodeIntBit(stats);
+								value = BinaryOperation.bit32ShiftL(value, 1) | decodeIntBit(stats);
 							}
 							value += 4436;
 						} else {
 							value = 0;
 							for (int i = 0; i < 12; i++) {
-								value = BinaryOperation.bit32Shift(value, 1, BinaryOperation.LEFT_SHIFT) | decodeIntBit(stats);
+								value = BinaryOperation.bit32ShiftL(value, 1) | decodeIntBit(stats);
 							}
 							value += 340;
 						}
 					} else {
 						value = 0;
 						for (int i = 0; i < 8; i++) {
-							value = BinaryOperation.bit32Shift(value, 1, BinaryOperation.LEFT_SHIFT) | decodeIntBit(stats);
+							value = BinaryOperation.bit32ShiftL(value, 1) | decodeIntBit(stats);
 						}
 						value += 84;
 					}
 				} else {
 					value = 0;
 					for (int i = 0; i < 6; i++) {
-						value = BinaryOperation.bit32Shift(value, 1, BinaryOperation.LEFT_SHIFT) | decodeIntBit(stats);
+						value = BinaryOperation.bit32ShiftL(value, 1) | decodeIntBit(stats);
 					}
 					value += 20;
 				}
 			} else {
 				value = decodeIntBit(stats);
-				value = BinaryOperation.bit32Shift(value, 1, BinaryOperation.LEFT_SHIFT) | decodeIntBit(stats);
-				value = BinaryOperation.bit32Shift(value, 1, BinaryOperation.LEFT_SHIFT) | decodeIntBit(stats);
-				value = BinaryOperation.bit32Shift(value, 1, BinaryOperation.LEFT_SHIFT) | decodeIntBit(stats);
+				value = BinaryOperation.bit32ShiftL(value, 1) | decodeIntBit(stats);
+				value = BinaryOperation.bit32ShiftL(value, 1) | decodeIntBit(stats);
+				value = BinaryOperation.bit32ShiftL(value, 1) | decodeIntBit(stats);
 				value += 4;
 			}
 		} else {
 			value = decodeIntBit(stats);
-			value = BinaryOperation.bit32Shift(value, 1, BinaryOperation.LEFT_SHIFT) | decodeIntBit(stats);
+			value = BinaryOperation.bit32ShiftL(value, 1) | decodeIntBit(stats);
 		}
 
 		int decodedInt;
@@ -227,7 +227,7 @@ public class ArithmeticDecoder {
 		previous = 1;
 		for (long i = 0; i < codeLen; i++) {
 			int bit = decodeBit(previous, stats);
-			previous = BinaryOperation.bit32Shift(previous, 1, BinaryOperation.LEFT_SHIFT) | bit;
+			previous = BinaryOperation.bit32ShiftL(previous, 1) | bit;
 		}
 
 		return previous - (1 << codeLen);
@@ -261,8 +261,8 @@ public class ArithmeticDecoder {
 						readByte();
 					}
 
-					a = BinaryOperation.bit32Shift(a, 1, BinaryOperation.LEFT_SHIFT);
-					c = BinaryOperation.bit32Shift(c, 1, BinaryOperation.LEFT_SHIFT);
+					a = BinaryOperation.bit32ShiftL(a, 1);
+					c = BinaryOperation.bit32ShiftL(c, 1);
 
 					counter--;
 				} while ((a & 0x80000000) == 0);
@@ -288,8 +288,8 @@ public class ArithmeticDecoder {
 					readByte();
 				}
 
-				a = BinaryOperation.bit32Shift(a, 1, BinaryOperation.LEFT_SHIFT);
-				c = BinaryOperation.bit32Shift(c, 1, BinaryOperation.LEFT_SHIFT);
+				a = BinaryOperation.bit32ShiftL(a, 1);
+				c = BinaryOperation.bit32ShiftL(c, 1);
 
 				counter--;
 			} while ((a & 0x80000000) == 0);
@@ -304,13 +304,13 @@ public class ArithmeticDecoder {
 			} else {
 				buffer0 = buffer1;
 				buffer1 = reader.readByte();
-				c = c + 0xfe00 - (BinaryOperation.bit32Shift(buffer0, 9, BinaryOperation.LEFT_SHIFT));
+				c = c + 0xfe00 - (BinaryOperation.bit32ShiftL(buffer0, 9));
 				counter = 7;
 			}
 		} else {
 			buffer0 = buffer1;
 			buffer1 = reader.readByte();
-			c = c + 0xff00 - (BinaryOperation.bit32Shift(buffer0, 8, BinaryOperation.LEFT_SHIFT));
+			c = c + 0xff00 - (BinaryOperation.bit32ShiftL(buffer0, 8));
 			counter = 8;
 		}
 	}
@@ -320,9 +320,9 @@ public class ArithmeticDecoder {
 
 		bit = decodeBit(previous, stats);
 		if (previous < 0x100) {
-			previous = BinaryOperation.bit32Shift(previous, 1, BinaryOperation.LEFT_SHIFT) | bit;
+			previous = BinaryOperation.bit32ShiftL(previous, 1) | bit;
 		} else {
-			previous = (((BinaryOperation.bit32Shift(previous, 1, BinaryOperation.LEFT_SHIFT)) | bit) & 0x1ff) | 0x100;
+			previous = (((BinaryOperation.bit32ShiftL(previous, 1)) | bit) & 0x1ff) | 0x100;
 		}
 		return bit;
 	}

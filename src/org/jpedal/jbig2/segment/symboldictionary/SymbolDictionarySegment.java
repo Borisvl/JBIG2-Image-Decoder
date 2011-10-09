@@ -50,8 +50,6 @@
 package org.jpedal.jbig2.segment.symboldictionary;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.jpedal.jbig2.JBIG2Exception;
 import org.jpedal.jbig2.decoders.ArithmeticDecoderStats;
@@ -60,7 +58,6 @@ import org.jpedal.jbig2.decoders.HuffmanDecoder;
 import org.jpedal.jbig2.decoders.JBIG2StreamDecoder;
 import org.jpedal.jbig2.image.JBIG2Bitmap;
 import org.jpedal.jbig2.segment.Segment;
-import org.jpedal.jbig2.segment.tables.JBIG2CodeTable;
 import org.jpedal.jbig2.util.BinaryOperation;
 
 public class SymbolDictionarySegment extends Segment {
@@ -90,7 +87,7 @@ public class SymbolDictionarySegment extends Segment {
 		/** read symbol dictionary flags */
 		readSymbolDictionaryFlags();
 
-		List codeTables = new ArrayList();
+		//List codeTables = new ArrayList();
 		int numberOfInputSymbols = 0;
 		int noOfReferredToSegments = segmentHeader.getReferredToSegmentCount();
 		int[] referredToSegments = segmentHeader.getReferredToSegments();
@@ -102,7 +99,7 @@ public class SymbolDictionarySegment extends Segment {
 			if (type == Segment.SYMBOL_DICTIONARY) {
 				numberOfInputSymbols += ((SymbolDictionarySegment) seg).noOfExportedSymbols;
 			} else if (type == Segment.TABLES) {
-				codeTables.add(seg);
+				//codeTables.add(seg);
 			}
 		}
 
@@ -146,7 +143,7 @@ public class SymbolDictionarySegment extends Segment {
 			} else if (sdHuffmanDifferenceHeight == 1) {
 				huffmanDHTable = HuffmanDecoder.huffmanTableE;
 			} else {
-				huffmanDHTable = ((JBIG2CodeTable) codeTables.get(i++)).getHuffTable();
+				//huffmanDHTable = ((JBIG2CodeTable) codeTables.get(i++)).getHuffTable();
 			}
 			
 			if (sdHuffmanDiferrenceWidth == 0) {
@@ -154,19 +151,19 @@ public class SymbolDictionarySegment extends Segment {
 			} else if (sdHuffmanDiferrenceWidth == 1) {
 				huffmanDWTable = HuffmanDecoder.huffmanTableC;
 			} else {
-				huffmanDWTable = ((JBIG2CodeTable) codeTables.get(i++)).getHuffTable();
+				//huffmanDWTable = ((JBIG2CodeTable) codeTables.get(i++)).getHuffTable();
 			}
 			
 			if (sdHuffBitmapSize == 0) {
 				huffmanBMSizeTable = HuffmanDecoder.huffmanTableA;
 			} else {
-				huffmanBMSizeTable = ((JBIG2CodeTable) codeTables.get(i++)).getHuffTable();
+				//huffmanBMSizeTable = ((JBIG2CodeTable) codeTables.get(i++)).getHuffTable();
 			}
 			
 			if (sdHuffAggregationInstances == 0) {
 				huffmanAggInstTable = HuffmanDecoder.huffmanTableA;
 			} else {
-				huffmanAggInstTable = ((JBIG2CodeTable) codeTables.get(i++)).getHuffTable();
+				//huffmanAggInstTable = ((JBIG2CodeTable) codeTables.get(i++)).getHuffTable();
 			}
 		}
 

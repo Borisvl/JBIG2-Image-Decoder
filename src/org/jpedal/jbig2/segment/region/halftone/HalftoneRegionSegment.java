@@ -187,7 +187,7 @@ public class HalftoneRegionSegment extends RegionSegment {
 			i = 0;
 			for (int row = 0; row < gridHeight; row++) {
 				for (int col = 0; col < gridWidth; col++) {
-					int bit = grayBitmap.getPixel(col, row) ^ (grayScaleImage[i] & 1);
+					int bit = grayBitmap.getPixel(col, row) ^ grayScaleImage[i] & 1;
 					grayScaleImage[i] = (grayScaleImage[i] << 1) | bit;
 					i++;
 				}

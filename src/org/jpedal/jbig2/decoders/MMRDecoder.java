@@ -82,12 +82,12 @@ public class MMRDecoder {
 	public long get24Bits() throws IOException {
 		while (bufferLength < 24) {
 
-			buffer = ((BinaryOperation.bit32Shift(buffer, 8, BinaryOperation.LEFT_SHIFT)) | (reader.readByte() & 0xff));
+			buffer = ((BinaryOperation.bit32ShiftL(buffer, 8)) | (reader.readByte() & 0xff));
 			bufferLength += 8;
 			noOfBytesRead++;
 		}
 
-		return (BinaryOperation.bit32Shift(buffer, (int) (bufferLength - 24), BinaryOperation.RIGHT_SHIFT)) & 0xffffff;
+		return (BinaryOperation.bit32ShiftR(buffer, (int) (bufferLength - 24))) & 0xffffff;
 	}
 
 	public int get2DCode() throws IOException {
@@ -100,26 +100,26 @@ public class MMRDecoder {
 
 			noOfBytesRead++;
 
-			int lookup = (int) ((BinaryOperation.bit32Shift(buffer, 1, BinaryOperation.RIGHT_SHIFT)) & 0x7f);
+			int lookup = (int) ((BinaryOperation.bit32ShiftR(buffer, 1)) & 0x7f);
 
 			tuple = twoDimensionalTable1[lookup];
 		} else if (bufferLength == 8) {
-			int lookup = (int) ((BinaryOperation.bit32Shift(buffer, 1, BinaryOperation.RIGHT_SHIFT)) & 0x7f);
+			int lookup = (int) ((BinaryOperation.bit32ShiftR(buffer, 1)) & 0x7f);
 			tuple = twoDimensionalTable1[lookup];
 		} else {
-			int lookup = (int) ((BinaryOperation.bit32Shift(buffer, (int) (7 - bufferLength), BinaryOperation.LEFT_SHIFT)) & 0x7f);
+			int lookup = (int) ((BinaryOperation.bit32ShiftL(buffer, (int) (7 - bufferLength))) & 0x7f);
 
 			tuple = twoDimensionalTable1[lookup];
 			if (tuple[0] < 0 || tuple[0] > (int) bufferLength) {
 				int right = (reader.readByte() & 0xff);
 
-				long left = (BinaryOperation.bit32Shift(buffer, 8, BinaryOperation.LEFT_SHIFT));
+				long left = (BinaryOperation.bit32ShiftL(buffer, 8));
 
 				buffer = left | right;
 				bufferLength += 8;
 				noOfBytesRead++;
 
-				int look = (int) (BinaryOperation.bit32Shift(buffer, (int) (bufferLength - 7), BinaryOperation.RIGHT_SHIFT) & 0x7f);
+				int look = (int) (BinaryOperation.bit32ShiftR(buffer, (int) (bufferLength - 7)) & 0x7f);
 
 				tuple = twoDimensionalTable1[look];
 			}
@@ -145,19 +145,19 @@ public class MMRDecoder {
 			noOfBytesRead++;
 		}
 		while (true) {
-			if (bufferLength >= 7 && ((BinaryOperation.bit32Shift(buffer, (int) (bufferLength - 7), BinaryOperation.RIGHT_SHIFT)) & 0x7f) == 0) {
+			if (bufferLength >= 7 && ((BinaryOperation.bit32ShiftR(buffer, (int) (bufferLength - 7))) & 0x7f) == 0) {
 				if (bufferLength <= 12) {
-					code = BinaryOperation.bit32Shift(buffer, (int) (12 - bufferLength), BinaryOperation.LEFT_SHIFT);
+					code = BinaryOperation.bit32ShiftL(buffer, (int) (12 - bufferLength));
 				} else {
-					code = BinaryOperation.bit32Shift(buffer, (int) (bufferLength - 12), BinaryOperation.RIGHT_SHIFT);
+					code = BinaryOperation.bit32ShiftR(buffer, (int) (bufferLength - 12));
 				}
 
 				tuple = whiteTable1[(int) (code & 0x1f)];
 			} else {
 				if (bufferLength <= 9) {
-					code = BinaryOperation.bit32Shift(buffer, (int) (9 - bufferLength), BinaryOperation.LEFT_SHIFT);
+					code = BinaryOperation.bit32ShiftL(buffer, (int) (9 - bufferLength));
 				} else {
-					code = BinaryOperation.bit32Shift(buffer, (int) (bufferLength - 9), BinaryOperation.RIGHT_SHIFT);
+					code = BinaryOperation.bit32ShiftR(buffer, (int) (bufferLength - 9));
 				}
 
 				int lookup = (int) (code & 0x1ff);
@@ -173,7 +173,7 @@ public class MMRDecoder {
 			if (bufferLength >= 12) {
 				break;
 			}
-			buffer = ((BinaryOperation.bit32Shift(buffer, 8, BinaryOperation.LEFT_SHIFT)) | reader.readByte() & 0xff);
+			buffer = ((BinaryOperation.bit32ShiftL(buffer, 8)) | reader.readByte() & 0xff);
 			bufferLength += 8;
 			noOfBytesRead++;
 		}
@@ -195,18 +195,18 @@ public class MMRDecoder {
 			noOfBytesRead++;
 		}
 		while (true) {
-			if (bufferLength >= 6 && ((BinaryOperation.bit32Shift(buffer, (int) (bufferLength - 6), BinaryOperation.RIGHT_SHIFT)) & 0x3f) == 0) {
+			if (bufferLength >= 6 && ((BinaryOperation.bit32ShiftR(buffer, (int) (bufferLength - 6))) & 0x3f) == 0) {
 				if (bufferLength <= 13) {
-					code = BinaryOperation.bit32Shift(buffer, (int) (13 - bufferLength), BinaryOperation.LEFT_SHIFT);
+					code = BinaryOperation.bit32ShiftL(buffer, (int) (13 - bufferLength));
 				} else {
-					code = BinaryOperation.bit32Shift(buffer, (int) (bufferLength - 13), BinaryOperation.RIGHT_SHIFT);
+					code = BinaryOperation.bit32ShiftR(buffer, (int) (bufferLength - 13));
 				}
 				tuple = blackTable1[(int) (code & 0x7f)];
 			} else if (bufferLength >= 4 && ((buffer >> (bufferLength - 4)) & 0x0f) == 0) {
 				if (bufferLength <= 12) {
-					code = BinaryOperation.bit32Shift(buffer, (int) (12 - bufferLength), BinaryOperation.LEFT_SHIFT);
+					code = BinaryOperation.bit32ShiftL(buffer, (int) (12 - bufferLength));
 				} else {
-					code = BinaryOperation.bit32Shift(buffer, (int) (bufferLength - 12), BinaryOperation.RIGHT_SHIFT);
+					code = BinaryOperation.bit32ShiftR(buffer, (int) (bufferLength - 12));
 				}
 
 				int lookup = (int) ((code & 0xff) - 64);
@@ -216,9 +216,9 @@ public class MMRDecoder {
 					tuple = blackTable1[blackTable1.length + lookup];
 			} else {
 				if (bufferLength <= 6) {
-					code = BinaryOperation.bit32Shift(buffer, (int) (6 - bufferLength), BinaryOperation.LEFT_SHIFT);
+					code = BinaryOperation.bit32ShiftL(buffer, (int) (6 - bufferLength));
 				} else {
-					code = BinaryOperation.bit32Shift(buffer, (int) (bufferLength - 6), BinaryOperation.RIGHT_SHIFT);
+					code = BinaryOperation.bit32ShiftR(buffer, (int) (bufferLength - 6));
 				}
 
 				int lookup = (int) (code & 0x3f);
@@ -234,7 +234,7 @@ public class MMRDecoder {
 			if (bufferLength >= 13) {
 				break;
 			}
-			buffer = ((BinaryOperation.bit32Shift(buffer, 8, BinaryOperation.LEFT_SHIFT)) | (reader.readByte() & 0xff));
+			buffer = ((BinaryOperation.bit32ShiftL(buffer, 8)) | (reader.readByte() & 0xff));
 			bufferLength += 8;
 			noOfBytesRead++;
 		}

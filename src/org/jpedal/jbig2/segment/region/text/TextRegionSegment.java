@@ -50,8 +50,8 @@
 package org.jpedal.jbig2.segment.region.text;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.jpedal.jbig2.JBIG2Exception;
@@ -69,8 +69,6 @@ public class TextRegionSegment extends RegionSegment {
 	private TextRegionFlags textRegionFlags = new TextRegionFlags();
 
 	private TextRegionHuffmanFlags textRegionHuffmanFlags = new TextRegionHuffmanFlags();
-
-	private int noOfSymbolInstances;
 
 	private boolean inlineImage;
 
@@ -93,7 +91,7 @@ public class TextRegionSegment extends RegionSegment {
 
 		short[] buff = new short[4];
 		decoder.readByte(buff);
-		noOfSymbolInstances = BinaryOperation.getInt32(buff);
+		int noOfSymbolInstances = BinaryOperation.getInt32(buff);
 
 		if (JBIG2StreamDecoder.debug)
 			System.out.println("noOfSymbolInstances = " + noOfSymbolInstances);
@@ -101,8 +99,8 @@ public class TextRegionSegment extends RegionSegment {
 		int noOfReferredToSegments = segmentHeader.getReferredToSegmentCount();
 		int[] referredToSegments = segmentHeader.getReferredToSegments();
 
-		List codeTables = new ArrayList();
-		List segmentsReferenced = new ArrayList();
+		//List codeTables = new ArrayList();
+		List<Segment> segmentsReferenced = new LinkedList<Segment>();
 		int noOfSymbols = 0;
 
 		if (JBIG2StreamDecoder.debug)
@@ -116,7 +114,7 @@ public class TextRegionSegment extends RegionSegment {
 				segmentsReferenced.add(seg);
 				noOfSymbols += ((SymbolDictionarySegment) seg).getNoOfExportedSymbols();
 			} else if (type == Segment.TABLES) {
-				codeTables.add(seg);
+				//codeTables.add(seg);
 			}
 		}
 
@@ -130,8 +128,8 @@ public class TextRegionSegment extends RegionSegment {
 
 		int currentSymbol = 0;
 		JBIG2Bitmap[] symbols = new JBIG2Bitmap[noOfSymbols];
-		for (Iterator it = segmentsReferenced.iterator(); it.hasNext();) {
-			Segment seg = (Segment) it.next();
+		for (Iterator<Segment> it = segmentsReferenced.iterator(); it.hasNext();) {
+			Segment seg = it.next();
 			if (seg.getSegmentHeader().getSegmentType() == Segment.SYMBOL_DICTIONARY) {
 				JBIG2Bitmap[] bitmaps = ((SymbolDictionarySegment) seg).getBitmaps();
 				for (int j = 0; j < bitmaps.length; j++) {
@@ -249,7 +247,7 @@ public class TextRegionSegment extends RegionSegment {
 
 			runLengthTable[35] = new int[] { 0, 0, HuffmanDecoder.jbig2HuffmanEOT };
 
-			runLengthTable = huffmanDecoder.buildTable(runLengthTable, 35);
+			runLengthTable = HuffmanDecoder.buildTable(runLengthTable, 35);
 
 			for (i = 0; i < noOfSymbols; i++) {
 				symbolCodeTable[i] = new int[] { i, 0, 0, 0 };
@@ -274,7 +272,7 @@ public class TextRegionSegment extends RegionSegment {
 
 			symbolCodeTable[noOfSymbols][1] = 0;
 			symbolCodeTable[noOfSymbols][2] = HuffmanDecoder.jbig2HuffmanEOT;
-			symbolCodeTable = huffmanDecoder.buildTable(symbolCodeTable, noOfSymbols);
+			symbolCodeTable = HuffmanDecoder.buildTable(symbolCodeTable, noOfSymbols);
 			
 			decoder.consumeRemainingBits();
 		} else {

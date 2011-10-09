@@ -57,7 +57,7 @@ public class ArithmeticDecoderStats {
 		this.contextSize = contextSize;
 		this.codingContextTable = new int[contextSize];
 		
-		reset();
+		//reset();
 	}
 
 	public void reset() {

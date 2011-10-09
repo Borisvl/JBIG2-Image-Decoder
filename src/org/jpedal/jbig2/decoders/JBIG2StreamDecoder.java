@@ -52,7 +52,6 @@ package org.jpedal.jbig2.decoders;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 import org.jpedal.jbig2.JBIG2Exception;
@@ -80,8 +79,8 @@ public class JBIG2StreamDecoder {
 
 	private int noOfPages = -1;
 
-	private List segments = new ArrayList();
-	private List bitmaps = new ArrayList();
+	private List<Segment> segments = new ArrayList<Segment>();
+	private List<JBIG2Bitmap> bitmaps = new ArrayList<JBIG2Bitmap>();
 
 	private byte[] globalData;
 
@@ -423,18 +422,16 @@ public class JBIG2StreamDecoder {
 		}
 
 		if (randomAccessOrganisation) {
-			for (Iterator it = segments.iterator(); it.hasNext();) {
-				Segment segment = (Segment) it.next();
+			for (Segment segment : segments) {
 				segment.readSegment();
 			}
 		}
 	}
 
 	public PageInformationSegment findPageSegement(int page) {
-		for (Iterator it = segments.iterator(); it.hasNext();) {
-			Segment segment = (Segment) it.next();
+		for (Segment segment : segments) {
 			SegmentHeader segmentHeader = segment.getSegmentHeader();
-			if (segmentHeader.getSegmentType() == segment.PAGE_INFORMATION && segmentHeader.getPageAssociation() == page) {
+			if (segmentHeader.getSegmentType() == Segment.PAGE_INFORMATION && segmentHeader.getPageAssociation() == page) {
 				return (PageInformationSegment) segment;
 			}
 		}
@@ -443,8 +440,7 @@ public class JBIG2StreamDecoder {
 	}
 
 	public Segment findSegment(int segmentNumber) {
-		for (Iterator it = segments.iterator(); it.hasNext();) {
-			Segment segment = (Segment) it.next();
+		for (Segment segment : segments) {
 			if (segment.getSegmentHeader().getSegmentNumber() == segmentNumber) {
 				return segment;
 			}
@@ -660,8 +656,7 @@ public class JBIG2StreamDecoder {
 	}
 
 	public JBIG2Bitmap findBitmap(int bitmapNumber) {
-		for (Iterator it = bitmaps.iterator(); it.hasNext();) {
-			JBIG2Bitmap bitmap = (JBIG2Bitmap) it.next();
+		for (JBIG2Bitmap bitmap : bitmaps) {
 			if (bitmap.getBitmapNumber() == bitmapNumber) {
 				return bitmap;
 			}
@@ -687,7 +682,7 @@ public class JBIG2StreamDecoder {
 		return randomAccessOrganisation;
 	}
 
-	public List getAllSegments() {
+	public List<Segment> getAllSegments() {
 		return segments;
 	}
 }

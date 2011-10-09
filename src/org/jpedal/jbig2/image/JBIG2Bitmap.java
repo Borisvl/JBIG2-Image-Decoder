@@ -10,6 +10,7 @@
  * 	This file is part of JPedal
  *
  * Copyright (c) 2008, IDRsolutions
+ * Copyright (c) 2011, Boris von Loesch 
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,8 +56,6 @@ import java.awt.image.DataBufferByte;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.BitSet;
 
 import org.jpedal.jbig2.JBIG2Exception;
 import org.jpedal.jbig2.decoders.ArithmeticDecoder;
@@ -70,9 +69,9 @@ public final class JBIG2Bitmap {
 
 	private int width, height, line;
 	private int bitmapNumber;
-	//private FastBitSet data;
+	public FastBitSet data;
 
-	private BitSet data;
+	//private BitSet data;
 	
 	//private static int counter = 0;
 	
@@ -89,7 +88,7 @@ public final class JBIG2Bitmap {
 		
 		this.line = (width + 7) >> 3;
 
-		this.data = new BitSet(width * height);
+		this.data = new FastBitSet(width * height);
 	}
 
 	public void readBitmap(boolean useMMR, int template, boolean typicalPredictionGenericDecodingOn, boolean useSkip, JBIG2Bitmap skipBitmap, short[] adaptiveTemplateX, short[] adaptiveTemplateY, int mmrDataLength) throws IOException, JBIG2Exception {
@@ -306,14 +305,17 @@ public final class JBIG2Bitmap {
 				case 0:
 
 					cxPtr0.setPointer(0, row - 2);
-					cx0 = cxPtr0.nextPixel();
-					cx0 = (BinaryOperation.bit32Shift(cx0, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr0.nextPixel();
+					cx0 = (cxPtr0.nextPixel() << 1); 
+					cx0 |= cxPtr0.nextPixel();
+					//cx0 = (BinaryOperation.bit32ShiftL(cx0, 1)) | cxPtr0.nextPixel();
 
 					cxPtr1.setPointer(0, row - 1);
-					cx1 = cxPtr1.nextPixel();
+					cx1 = (cxPtr1.nextPixel() << 2); 
+					cx1 |= (cxPtr1.nextPixel() << 1); 
+					cx1 |= (cxPtr1.nextPixel());
 
-					cx1 = (BinaryOperation.bit32Shift(cx1, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr1.nextPixel();
-					cx1 = (BinaryOperation.bit32Shift(cx1, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr1.nextPixel();
+					//cx1 = (BinaryOperation.bit32ShiftL(cx1, 1)) | cxPtr1.nextPixel();
+					//cx1 = (BinaryOperation.bit32ShiftL(cx1, 1)) | cxPtr1.nextPixel();
 
 					cx2 = 0;
 
@@ -324,34 +326,40 @@ public final class JBIG2Bitmap {
 
 					for (int col = 0; col < width; col++) {
 
-						cx = (BinaryOperation.bit32Shift(cx0, 13, BinaryOperation.LEFT_SHIFT)) | (BinaryOperation.bit32Shift(cx1, 8, BinaryOperation.LEFT_SHIFT)) | (BinaryOperation.bit32Shift(cx2, 4, BinaryOperation.LEFT_SHIFT)) | (atPtr0.nextPixel() << 3) | (atPtr1.nextPixel() << 2) | (atPtr2.nextPixel() << 1) | atPtr3.nextPixel();
+						cx = (BinaryOperation.bit32ShiftL(cx0, 13)) | (BinaryOperation.bit32ShiftL(cx1, 8)) | (BinaryOperation.bit32ShiftL(cx2, 4)) | (atPtr0.nextPixel() << 3) | (atPtr1.nextPixel() << 2) | (atPtr2.nextPixel() << 1) | atPtr3.nextPixel();
 
 						if (useSkip && skipBitmap.getPixel(col, row) != 0) {
 							pixel = 0;
 						} else {
 							pixel = arithmeticDecoder.decodeBit(cx, arithmeticDecoder.genericRegionStats);
 							if (pixel != 0) {
-								setPixel(col, row, 1);
+								data.set(row*width + col);
 							}
 						}
 
-						cx0 = ((BinaryOperation.bit32Shift(cx0, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr0.nextPixel()) & 0x07;
-						cx1 = ((BinaryOperation.bit32Shift(cx1, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr1.nextPixel()) & 0x1f;
-						cx2 = ((BinaryOperation.bit32Shift(cx2, 1, BinaryOperation.LEFT_SHIFT)) | pixel) & 0x0f;
+						cx0 = ((BinaryOperation.bit32ShiftL(cx0, 1)) | cxPtr0.nextPixel()) & 0x07;
+						cx1 = ((BinaryOperation.bit32ShiftL(cx1, 1)) | cxPtr1.nextPixel()) & 0x1f;
+						cx2 = ((BinaryOperation.bit32ShiftL(cx2, 1)) | pixel) & 0x0f;
 					}
 					break;
 
 				case 1:
 
 					cxPtr0.setPointer(0, row - 2);
-					cx0 = cxPtr0.nextPixel();
-					cx0 = (BinaryOperation.bit32Shift(cx0, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr0.nextPixel();
-					cx0 = (BinaryOperation.bit32Shift(cx0, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr0.nextPixel();
+					cx0 = (cxPtr0.nextPixel() << 2);
+					cx0 |= (cxPtr0.nextPixel() << 1);
+					cx0 |= (cxPtr0.nextPixel());
+					/*cx0 = cxPtr0.nextPixel();
+					cx0 = (BinaryOperation.bit32ShiftL(cx0, 1)) | cxPtr0.nextPixel();
+					cx0 = (BinaryOperation.bit32ShiftL(cx0, 1)) | cxPtr0.nextPixel();*/
 
 					cxPtr1.setPointer(0, row - 1);
-					cx1 = cxPtr1.nextPixel();
-					cx1 = (BinaryOperation.bit32Shift(cx1, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr1.nextPixel();
-					cx1 = (BinaryOperation.bit32Shift(cx1, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr1.nextPixel();
+					cx1 = (cxPtr1.nextPixel() << 2);
+					cx1 |= (cxPtr1.nextPixel() << 1);
+					cx1 |= (cxPtr1.nextPixel());
+					/*cx1 = cxPtr1.nextPixel();
+					cx1 = (BinaryOperation.bit32ShiftL(cx1, 1)) | cxPtr1.nextPixel();
+					cx1 = (BinaryOperation.bit32ShiftL(cx1, 1)) | cxPtr1.nextPixel();*/
 
 					cx2 = 0;
 
@@ -359,32 +367,37 @@ public final class JBIG2Bitmap {
 
 					for (int col = 0; col < width; col++) {
 
-						cx = (BinaryOperation.bit32Shift(cx0, 9, BinaryOperation.LEFT_SHIFT)) | (BinaryOperation.bit32Shift(cx1, 4, BinaryOperation.LEFT_SHIFT)) | (BinaryOperation.bit32Shift(cx2, 1, BinaryOperation.LEFT_SHIFT)) | atPtr0.nextPixel();
+						cx = (BinaryOperation.bit32ShiftL(cx0, 9)) | (BinaryOperation.bit32ShiftL(cx1, 4)) | (BinaryOperation.bit32ShiftL(cx2, 1)) | atPtr0.nextPixel();
 
 						if (useSkip && skipBitmap.getPixel(col, row) != 0) {
 							pixel = 0;
 						} else {
 							pixel = arithmeticDecoder.decodeBit(cx, arithmeticDecoder.genericRegionStats);
 							if (pixel != 0) {
-								setPixel(col, row, 1);
+								data.set(row*width + col);
 							}
 						}
 
-						cx0 = ((BinaryOperation.bit32Shift(cx0, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr0.nextPixel()) & 0x0f;
-						cx1 = ((BinaryOperation.bit32Shift(cx1, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr1.nextPixel()) & 0x1f;
-						cx2 = ((BinaryOperation.bit32Shift(cx2, 1, BinaryOperation.LEFT_SHIFT)) | pixel) & 0x07;
+						cx0 = ((BinaryOperation.bit32ShiftL(cx0, 1)) | cxPtr0.nextPixel()) & 0x0f;
+						cx1 = ((BinaryOperation.bit32ShiftL(cx1, 1)) | cxPtr1.nextPixel()) & 0x1f;
+						cx2 = ((BinaryOperation.bit32ShiftL(cx2, 1)) | pixel) & 0x07;
 					}
 					break;
 
 				case 2:
 
 					cxPtr0.setPointer(0, row - 2);
-					cx0 = cxPtr0.nextPixel();
-					cx0 = (BinaryOperation.bit32Shift(cx0, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr0.nextPixel();
+					cx0 = (cxPtr0.nextPixel() << 1); 
+					cx0 |= (cxPtr0.nextPixel());
+					/*cx0 = cxPtr0.nextPixel();
+					cx0 = (BinaryOperation.bit32ShiftL(cx0, 1)) | cxPtr0.nextPixel();
+					*/
 
 					cxPtr1.setPointer(0, row - 1);
-					cx1 = cxPtr1.nextPixel();
-					cx1 = (BinaryOperation.bit32Shift(cx1, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr1.nextPixel();
+					cx1 = (cxPtr1.nextPixel() << 1); 
+					cx1 |= (cxPtr1.nextPixel());
+					/*cx1 = cxPtr1.nextPixel();
+					cx1 = (BinaryOperation.bit32ShiftL(cx1, 1)) | cxPtr1.nextPixel();*/
 
 					cx2 = 0;
 
@@ -392,36 +405,38 @@ public final class JBIG2Bitmap {
 
 					for (int col = 0; col < width; col++) {
 
-						cx = (BinaryOperation.bit32Shift(cx0, 7, BinaryOperation.LEFT_SHIFT)) | (BinaryOperation.bit32Shift(cx1, 3, BinaryOperation.LEFT_SHIFT)) | (BinaryOperation.bit32Shift(cx2, 1, BinaryOperation.LEFT_SHIFT)) | atPtr0.nextPixel();
+						cx = (BinaryOperation.bit32ShiftL(cx0, 7)) | (BinaryOperation.bit32ShiftL(cx1, 3)) | (BinaryOperation.bit32ShiftL(cx2, 1)) | atPtr0.nextPixel();
 
 						if (useSkip && skipBitmap.getPixel(col, row) != 0) {
 							pixel = 0;
 						} else {
 							pixel = arithmeticDecoder.decodeBit(cx, arithmeticDecoder.genericRegionStats);
 							if (pixel != 0) {
-								setPixel(col, row, 1);
+								data.set(row*width + col);
 							}
 						}
 
-						cx0 = ((BinaryOperation.bit32Shift(cx0, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr0.nextPixel()) & 0x07;
-						cx1 = ((BinaryOperation.bit32Shift(cx1, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr1.nextPixel()) & 0x0f;
-						cx2 = ((BinaryOperation.bit32Shift(cx2, 1, BinaryOperation.LEFT_SHIFT)) | pixel) & 0x03;
+						cx0 = ((BinaryOperation.bit32ShiftL(cx0, 1)) | cxPtr0.nextPixel()) & 0x07;
+						cx1 = ((BinaryOperation.bit32ShiftL(cx1, 1)) | cxPtr1.nextPixel()) & 0x0f;
+						cx2 = ((BinaryOperation.bit32ShiftL(cx2, 1)) | pixel) & 0x03;
 					}
 					break;
 
 				case 3:
 
 					cxPtr1.setPointer(0, row - 1);
-					cx1 = cxPtr1.nextPixel();
-					cx1 = (BinaryOperation.bit32Shift(cx1, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr1.nextPixel();
-
+					cx1 = (cxPtr1.nextPixel() << 1);
+					cx1 |= (cxPtr1.nextPixel());
+					/*cx1 = cxPtr1.nextPixel();
+					cx1 = (BinaryOperation.bit32ShiftL(cx1, 1)) | cxPtr1.nextPixel();
+*/
 					cx2 = 0;
 
 					atPtr0.setPointer(adaptiveTemplateX[0], row + adaptiveTemplateY[0]);
 
 					for (int col = 0; col < width; col++) {
 
-						cx = (BinaryOperation.bit32Shift(cx1, 5, BinaryOperation.LEFT_SHIFT)) | (BinaryOperation.bit32Shift(cx2, 1, BinaryOperation.LEFT_SHIFT)) | atPtr0.nextPixel();
+						cx = (BinaryOperation.bit32ShiftL(cx1, 5)) | (BinaryOperation.bit32ShiftL(cx2, 1)) | atPtr0.nextPixel();
 
 						if (useSkip && skipBitmap.getPixel(col, row) != 0) {
 							pixel = 0;
@@ -429,12 +444,12 @@ public final class JBIG2Bitmap {
 						} else {
 							pixel = arithmeticDecoder.decodeBit(cx, arithmeticDecoder.genericRegionStats);
 							if (pixel != 0) {
-								setPixel(col, row, 1);
+								data.set(row*width + col);
 							}
 						}
 
-						cx1 = ((BinaryOperation.bit32Shift(cx1, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr1.nextPixel()) & 0x1f;
-						cx2 = ((BinaryOperation.bit32Shift(cx2, 1, BinaryOperation.LEFT_SHIFT)) | pixel) & 0x0f;
+						cx1 = ((BinaryOperation.bit32ShiftL(cx1, 1)) | cxPtr1.nextPixel()) & 0x1f;
+						cx2 = ((BinaryOperation.bit32ShiftL(cx2, 1)) | pixel) & 0x0f;
 					}
 					break;
 				}
@@ -494,7 +509,7 @@ public final class JBIG2Bitmap {
 
 				cxPtr3.setPointer(-1 - referenceDX, row - referenceDY);
 				cx3 = cxPtr3.nextPixel();
-				cx3 = (BinaryOperation.bit32Shift(cx3, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr3.nextPixel();
+				cx3 = (BinaryOperation.bit32ShiftL(cx3, 1)) | cxPtr3.nextPixel();
 
 				cxPtr4.setPointer(-referenceDX, row + 1 - referenceDY);
 				cx4 = cxPtr4.nextPixel();
@@ -504,30 +519,30 @@ public final class JBIG2Bitmap {
 				if (typicalPredictionGenericRefinementOn) {
 					typicalPredictionGenericRefinementCXPtr0.setPointer(-1 - referenceDX, row - 1 - referenceDY);
 					typicalPredictionGenericRefinementCX0 = typicalPredictionGenericRefinementCXPtr0.nextPixel();
-					typicalPredictionGenericRefinementCX0 = (BinaryOperation.bit32Shift(typicalPredictionGenericRefinementCX0, 1, BinaryOperation.LEFT_SHIFT)) | typicalPredictionGenericRefinementCXPtr0.nextPixel();
-					typicalPredictionGenericRefinementCX0 = (BinaryOperation.bit32Shift(typicalPredictionGenericRefinementCX0, 1, BinaryOperation.LEFT_SHIFT)) | typicalPredictionGenericRefinementCXPtr0.nextPixel();
+					typicalPredictionGenericRefinementCX0 = (BinaryOperation.bit32ShiftL(typicalPredictionGenericRefinementCX0, 1)) | typicalPredictionGenericRefinementCXPtr0.nextPixel();
+					typicalPredictionGenericRefinementCX0 = (BinaryOperation.bit32ShiftL(typicalPredictionGenericRefinementCX0, 1)) | typicalPredictionGenericRefinementCXPtr0.nextPixel();
 
 					typicalPredictionGenericRefinementCXPtr1.setPointer(-1 - referenceDX, row - referenceDY);
 					typicalPredictionGenericRefinementCX1 = typicalPredictionGenericRefinementCXPtr1.nextPixel();
-					typicalPredictionGenericRefinementCX1 = (BinaryOperation.bit32Shift(typicalPredictionGenericRefinementCX1, 1, BinaryOperation.LEFT_SHIFT)) | typicalPredictionGenericRefinementCXPtr1.nextPixel();
-					typicalPredictionGenericRefinementCX1 = (BinaryOperation.bit32Shift(typicalPredictionGenericRefinementCX1, 1, BinaryOperation.LEFT_SHIFT)) | typicalPredictionGenericRefinementCXPtr1.nextPixel();
+					typicalPredictionGenericRefinementCX1 = (BinaryOperation.bit32ShiftL(typicalPredictionGenericRefinementCX1, 1)) | typicalPredictionGenericRefinementCXPtr1.nextPixel();
+					typicalPredictionGenericRefinementCX1 = (BinaryOperation.bit32ShiftL(typicalPredictionGenericRefinementCX1, 1)) | typicalPredictionGenericRefinementCXPtr1.nextPixel();
 
 					typicalPredictionGenericRefinementCXPtr2.setPointer(-1 - referenceDX, row + 1 - referenceDY);
 					typicalPredictionGenericRefinementCX2 = typicalPredictionGenericRefinementCXPtr2.nextPixel();
-					typicalPredictionGenericRefinementCX2 = (BinaryOperation.bit32Shift(typicalPredictionGenericRefinementCX2, 1, BinaryOperation.LEFT_SHIFT)) | typicalPredictionGenericRefinementCXPtr2.nextPixel();
-					typicalPredictionGenericRefinementCX2 = (BinaryOperation.bit32Shift(typicalPredictionGenericRefinementCX2, 1, BinaryOperation.LEFT_SHIFT)) | typicalPredictionGenericRefinementCXPtr2.nextPixel();
+					typicalPredictionGenericRefinementCX2 = (BinaryOperation.bit32ShiftL(typicalPredictionGenericRefinementCX2, 1)) | typicalPredictionGenericRefinementCXPtr2.nextPixel();
+					typicalPredictionGenericRefinementCX2 = (BinaryOperation.bit32ShiftL(typicalPredictionGenericRefinementCX2, 1)) | typicalPredictionGenericRefinementCXPtr2.nextPixel();
 				}
 
 				for (int col = 0; col < width; col++) {
 
-					cx0 = ((BinaryOperation.bit32Shift(cx0, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr0.nextPixel()) & 7;
-					cx3 = ((BinaryOperation.bit32Shift(cx3, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr3.nextPixel()) & 7;
-					cx4 = ((BinaryOperation.bit32Shift(cx4, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr4.nextPixel()) & 3;
+					cx0 = ((BinaryOperation.bit32ShiftL(cx0, 1)) | cxPtr0.nextPixel()) & 7;
+					cx3 = ((BinaryOperation.bit32ShiftL(cx3, 1)) | cxPtr3.nextPixel()) & 7;
+					cx4 = ((BinaryOperation.bit32ShiftL(cx4, 1)) | cxPtr4.nextPixel()) & 3;
 
 					if (typicalPredictionGenericRefinementOn) {
-						typicalPredictionGenericRefinementCX0 = ((BinaryOperation.bit32Shift(typicalPredictionGenericRefinementCX0, 1, BinaryOperation.LEFT_SHIFT)) | typicalPredictionGenericRefinementCXPtr0.nextPixel()) & 7;
-						typicalPredictionGenericRefinementCX1 = ((BinaryOperation.bit32Shift(typicalPredictionGenericRefinementCX1, 1, BinaryOperation.LEFT_SHIFT)) | typicalPredictionGenericRefinementCXPtr1.nextPixel()) & 7;
-						typicalPredictionGenericRefinementCX2 = ((BinaryOperation.bit32Shift(typicalPredictionGenericRefinementCX2, 1, BinaryOperation.LEFT_SHIFT)) | typicalPredictionGenericRefinementCXPtr2.nextPixel()) & 7;
+						typicalPredictionGenericRefinementCX0 = ((BinaryOperation.bit32ShiftL(typicalPredictionGenericRefinementCX0, 1)) | typicalPredictionGenericRefinementCXPtr0.nextPixel()) & 7;
+						typicalPredictionGenericRefinementCX1 = ((BinaryOperation.bit32ShiftL(typicalPredictionGenericRefinementCX1, 1)) | typicalPredictionGenericRefinementCXPtr1.nextPixel()) & 7;
+						typicalPredictionGenericRefinementCX2 = ((BinaryOperation.bit32ShiftL(typicalPredictionGenericRefinementCX2, 1)) | typicalPredictionGenericRefinementCXPtr2.nextPixel()) & 7;
 
 						int decodeBit = arithmeticDecoder.decodeBit(ltpCX, arithmeticDecoder.refinementRegionStats);
 						if (decodeBit != 0) {
@@ -542,11 +557,11 @@ public final class JBIG2Bitmap {
 						}
 					}
 
-					cx = (BinaryOperation.bit32Shift(cx0, 7, BinaryOperation.LEFT_SHIFT)) | (cxPtr1.nextPixel() << 6) | (cxPtr2.nextPixel() << 5) | (BinaryOperation.bit32Shift(cx3, 2, BinaryOperation.LEFT_SHIFT)) | cx4;
+					cx = (BinaryOperation.bit32ShiftL(cx0, 7)) | (cxPtr1.nextPixel() << 6) | (cxPtr2.nextPixel() << 5) | (BinaryOperation.bit32ShiftL(cx3, 2)) | cx4;
 
 					int pixel = arithmeticDecoder.decodeBit(cx, arithmeticDecoder.refinementRegionStats);
 					if (pixel == 1) {
-						setPixel(col, row, 1);
+						data.set(row*width + col);
 					}
 				}
 
@@ -562,11 +577,11 @@ public final class JBIG2Bitmap {
 
 				cxPtr3.setPointer(-1 - referenceDX, row - referenceDY);
 				cx3 = cxPtr3.nextPixel();
-				cx3 = (BinaryOperation.bit32Shift(cx3, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr3.nextPixel();
+				cx3 = (BinaryOperation.bit32ShiftL(cx3, 1)) | cxPtr3.nextPixel();
 
 				cxPtr4.setPointer(-1 - referenceDX, row + 1 - referenceDY);
 				cx4 = cxPtr4.nextPixel();
-				cx4 = (BinaryOperation.bit32Shift(cx4, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr4.nextPixel();
+				cx4 = (BinaryOperation.bit32ShiftL(cx4, 1)) | cxPtr4.nextPixel();
 
 				cxPtr5.setPointer(adaptiveTemplateX[0], row + adaptiveTemplateY[0]);
 
@@ -576,31 +591,31 @@ public final class JBIG2Bitmap {
 				if (typicalPredictionGenericRefinementOn) {
 					typicalPredictionGenericRefinementCXPtr0.setPointer(-1 - referenceDX, row - 1 - referenceDY);
 					typicalPredictionGenericRefinementCX0 = typicalPredictionGenericRefinementCXPtr0.nextPixel();
-					typicalPredictionGenericRefinementCX0 = (BinaryOperation.bit32Shift(typicalPredictionGenericRefinementCX0, 1, BinaryOperation.LEFT_SHIFT)) | typicalPredictionGenericRefinementCXPtr0.nextPixel();
-					typicalPredictionGenericRefinementCX0 = (BinaryOperation.bit32Shift(typicalPredictionGenericRefinementCX0, 1, BinaryOperation.LEFT_SHIFT)) | typicalPredictionGenericRefinementCXPtr0.nextPixel();
+					typicalPredictionGenericRefinementCX0 = (BinaryOperation.bit32ShiftL(typicalPredictionGenericRefinementCX0, 1)) | typicalPredictionGenericRefinementCXPtr0.nextPixel();
+					typicalPredictionGenericRefinementCX0 = (BinaryOperation.bit32ShiftL(typicalPredictionGenericRefinementCX0, 1)) | typicalPredictionGenericRefinementCXPtr0.nextPixel();
 
 					typicalPredictionGenericRefinementCXPtr1.setPointer(-1 - referenceDX, row - referenceDY);
 					typicalPredictionGenericRefinementCX1 = typicalPredictionGenericRefinementCXPtr1.nextPixel();
-					typicalPredictionGenericRefinementCX1 = (BinaryOperation.bit32Shift(typicalPredictionGenericRefinementCX1, 1, BinaryOperation.LEFT_SHIFT)) | typicalPredictionGenericRefinementCXPtr1.nextPixel();
-					typicalPredictionGenericRefinementCX1 = (BinaryOperation.bit32Shift(typicalPredictionGenericRefinementCX1, 1, BinaryOperation.LEFT_SHIFT)) | typicalPredictionGenericRefinementCXPtr1.nextPixel();
+					typicalPredictionGenericRefinementCX1 = (BinaryOperation.bit32ShiftL(typicalPredictionGenericRefinementCX1, 1)) | typicalPredictionGenericRefinementCXPtr1.nextPixel();
+					typicalPredictionGenericRefinementCX1 = (BinaryOperation.bit32ShiftL(typicalPredictionGenericRefinementCX1, 1)) | typicalPredictionGenericRefinementCXPtr1.nextPixel();
 
 					typicalPredictionGenericRefinementCXPtr2.setPointer(-1 - referenceDX, row + 1 - referenceDY);
 					typicalPredictionGenericRefinementCX2 = typicalPredictionGenericRefinementCXPtr2.nextPixel();
-					typicalPredictionGenericRefinementCX2 = (BinaryOperation.bit32Shift(typicalPredictionGenericRefinementCX2, 1, BinaryOperation.LEFT_SHIFT)) | typicalPredictionGenericRefinementCXPtr2.nextPixel();
-					typicalPredictionGenericRefinementCX2 = (BinaryOperation.bit32Shift(typicalPredictionGenericRefinementCX2, 1, BinaryOperation.LEFT_SHIFT)) | typicalPredictionGenericRefinementCXPtr2.nextPixel();
+					typicalPredictionGenericRefinementCX2 = (BinaryOperation.bit32ShiftL(typicalPredictionGenericRefinementCX2, 1)) | typicalPredictionGenericRefinementCXPtr2.nextPixel();
+					typicalPredictionGenericRefinementCX2 = (BinaryOperation.bit32ShiftL(typicalPredictionGenericRefinementCX2, 1)) | typicalPredictionGenericRefinementCXPtr2.nextPixel();
 				}
 
 				for (int col = 0; col < width; col++) {
 
-					cx0 = ((BinaryOperation.bit32Shift(cx0, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr0.nextPixel()) & 3;
-					cx2 = ((BinaryOperation.bit32Shift(cx2, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr2.nextPixel()) & 3;
-					cx3 = ((BinaryOperation.bit32Shift(cx3, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr3.nextPixel()) & 7;
-					cx4 = ((BinaryOperation.bit32Shift(cx4, 1, BinaryOperation.LEFT_SHIFT)) | cxPtr4.nextPixel()) & 7;
+					cx0 = ((BinaryOperation.bit32ShiftL(cx0, 1)) | cxPtr0.nextPixel()) & 3;
+					cx2 = ((BinaryOperation.bit32ShiftL(cx2, 1)) | cxPtr2.nextPixel()) & 3;
+					cx3 = ((BinaryOperation.bit32ShiftL(cx3, 1)) | cxPtr3.nextPixel()) & 7;
+					cx4 = ((BinaryOperation.bit32ShiftL(cx4, 1)) | cxPtr4.nextPixel()) & 7;
 
 					if (typicalPredictionGenericRefinementOn) {
-						typicalPredictionGenericRefinementCX0 = ((BinaryOperation.bit32Shift(typicalPredictionGenericRefinementCX0, 1, BinaryOperation.LEFT_SHIFT)) | typicalPredictionGenericRefinementCXPtr0.nextPixel()) & 7;
-						typicalPredictionGenericRefinementCX1 = ((BinaryOperation.bit32Shift(typicalPredictionGenericRefinementCX1, 1, BinaryOperation.LEFT_SHIFT)) | typicalPredictionGenericRefinementCXPtr1.nextPixel()) & 7;
-						typicalPredictionGenericRefinementCX2 = ((BinaryOperation.bit32Shift(typicalPredictionGenericRefinementCX2, 1, BinaryOperation.LEFT_SHIFT)) | typicalPredictionGenericRefinementCXPtr2.nextPixel()) & 7;
+						typicalPredictionGenericRefinementCX0 = ((BinaryOperation.bit32ShiftL(typicalPredictionGenericRefinementCX0, 1)) | typicalPredictionGenericRefinementCXPtr0.nextPixel()) & 7;
+						typicalPredictionGenericRefinementCX1 = ((BinaryOperation.bit32ShiftL(typicalPredictionGenericRefinementCX1, 1)) | typicalPredictionGenericRefinementCXPtr1.nextPixel()) & 7;
+						typicalPredictionGenericRefinementCX2 = ((BinaryOperation.bit32ShiftL(typicalPredictionGenericRefinementCX2, 1)) | typicalPredictionGenericRefinementCXPtr2.nextPixel()) & 7;
 
 						int decodeBit = arithmeticDecoder.decodeBit(ltpCX, arithmeticDecoder.refinementRegionStats);
 						if (decodeBit == 1) {
@@ -615,7 +630,7 @@ public final class JBIG2Bitmap {
 						}
 					}
 
-					cx = (BinaryOperation.bit32Shift(cx0, 11, BinaryOperation.LEFT_SHIFT)) | (cxPtr1.nextPixel() << 10) | (BinaryOperation.bit32Shift(cx2, 8, BinaryOperation.LEFT_SHIFT)) | (BinaryOperation.bit32Shift(cx3, 5, BinaryOperation.LEFT_SHIFT)) | (BinaryOperation.bit32Shift(cx4, 2, BinaryOperation.LEFT_SHIFT)) | (cxPtr5.nextPixel() << 1) | cxPtr6.nextPixel();
+					cx = (BinaryOperation.bit32ShiftL(cx0, 11)) | (cxPtr1.nextPixel() << 10) | (BinaryOperation.bit32ShiftL(cx2, 8)) | (BinaryOperation.bit32ShiftL(cx3, 5)) | (BinaryOperation.bit32ShiftL(cx4, 2)) | (cxPtr5.nextPixel() << 1) | cxPtr6.nextPixel();
 
 					int pixel = arithmeticDecoder.decodeBit(cx, arithmeticDecoder.refinementRegionStats);
 					if (pixel == 1) {
@@ -792,13 +807,13 @@ public final class JBIG2Bitmap {
 	}
 
 	public void clear(int defPixel) {
-		data.set(0, data.size(), defPixel == 1);
+		data.setAll(defPixel == 1);
+		//data.set(0, data.size(), defPixel == 1);
 	}
 
 	public void combine(JBIG2Bitmap bitmap, int x, int y, long combOp) {
 		int srcWidth = bitmap.width;
 		int srcHeight = bitmap.height;
-		int srcRow = 0, srcCol = 0;
 		
 //		int maxRow = y + srcHeight;
 //		int maxCol = x + srcWidth;
@@ -838,38 +853,99 @@ public final class JBIG2Bitmap {
 //
 //			srcCol = 0;
 //			srcRow++;
-		
-		for (int row = y; row < y + srcHeight; row++) {
-			for (int col = x; col < x + srcWidth; col++) {
+		int minWidth = srcWidth;
+		if (x + srcWidth > width) {
+			//Should not happen but occurs sometimes because there is something wrong with halftone pics
+			minWidth = width - x;
+		}
+		if (y + srcHeight > height) {
+			//Should not happen but occurs sometimes because there is something wrong with halftone pics
+			srcHeight = height - y;
+		}
 
-				int srcPixel = bitmap.getPixel(srcCol, srcRow);
-
-				switch ((int) combOp) {
-				case 0: // or
-					setPixel(col, row, getPixel(col, row) | srcPixel);
-					break;
-				case 1: // and
-					setPixel(col, row, getPixel(col, row) & srcPixel);
-					break;
-				case 2: // xor
-					setPixel(col, row, getPixel(col, row) ^ srcPixel);
-					break;
-				case 3: // xnor
-					if ((getPixel(col, row) == 1 && srcPixel == 1) || (getPixel(col, row) == 0 && srcPixel == 0))
-						setPixel(col, row, 1);
-					else
-						setPixel(col, row, 0);
-
-					break;
-				case 4: // replace
-					setPixel(col, row, srcPixel);
-					break;
+		int srcIndx = 0;
+		int indx = y * width + x;
+		if (combOp == 0) {
+			if (x == 0 && y == 0 && srcHeight == height && srcWidth == width) {
+				for (int i=0; i < data.w.length; i++) {
+					data.w[i] |= bitmap.data.w[i];
 				}
-				srcCol++;
 			}
+			for (int row = y; row < y + srcHeight; row++) {
+				indx = row * width + x;
+				data.or(indx, bitmap.data, srcIndx, minWidth);
+				/*for (int col = 0; col < minWidth; col++) {
+					if (bitmap.data.get(srcIndx + col)) data.set(indx);
+					//data.set(indx, bitmap.data.get(srcIndx + col) || data.get(indx));
+					indx++;
+				}*/
+				srcIndx += srcWidth;
+			}
+		}
+		else if (combOp == 1) {
+			if (x == 0 && y == 0 && srcHeight == height && srcWidth == width) {
+				for (int i=0; i < data.w.length; i++) {
+					data.w[i] &= bitmap.data.w[i];
+				}
+			}
+			for (int row = y; row < y + srcHeight; row++) {
+				indx = row * width + x;
+				for (int col = 0; col < minWidth; col++) {
+					data.set(indx, bitmap.data.get(srcIndx + col) && data.get(indx));
+					indx++;
+				}
+				srcIndx += srcWidth;
+			}
+		}
 
-			srcCol = 0;
-			srcRow++;
+		else if (combOp == 2) {
+			if (x == 0 && y == 0 && srcHeight == height && srcWidth == width) {
+				for (int i=0; i < data.w.length; i++) {
+					data.w[i] ^= bitmap.data.w[i];
+				}
+			}
+			else {
+				for (int row = y; row < y + srcHeight; row++) {
+					indx = row * width + x;
+					for (int col = 0; col < minWidth; col++) {
+						data.set(indx, bitmap.data.get(srcIndx + col) ^ data.get(indx));
+						indx++;
+					}
+					srcIndx += srcWidth;
+				}
+			}
+		}
+
+		else if (combOp == 3) {
+			for (int row = y; row < y + srcHeight; row++) {
+				indx = row * width + x;
+				for (int col = 0; col < minWidth; col++) {
+					boolean srcPixel = bitmap.data.get(srcIndx + col);
+					boolean pixel = data.get(indx);
+					data.set(indx, pixel == srcPixel);
+					indx++;
+				}
+				srcIndx += srcWidth;
+			}
+		}
+
+		else if (combOp == 4) {
+			if (x == 0 && y == 0 && srcHeight == height && srcWidth == width) {
+				for (int i=0; i < data.w.length; i++) {
+					data.w[i] = bitmap.data.w[i];
+				}
+			}
+			else {
+				for (int row = y; row < y + srcHeight; row++) {
+					indx = row * width + x;
+					for (int col = 0; col < minWidth; col++) {
+						data.set(indx, bitmap.data.get(srcIndx + col));
+						srcIndx++;
+						indx++;
+					}
+					srcIndx += srcWidth;
+				}
+			}
 		}
 	}
 
@@ -931,18 +1007,21 @@ public final class JBIG2Bitmap {
 		byte[] bytes = new byte[height * line];
 
 		int count = 0, offset = 0;
+		long k = 0;
 		for (int row = 0; row < height; row++) {
 			for (int col = 0; col < width; col++) {
-				if (data.get(count)) {
-					int bite = (count + offset) / 8;
-					int bit = (count + offset) % 8;
-
-					bytes[bite] |= 1 << (7 - bit);
+				if ((count & FastBitSet.mask) == 0) {
+					k = data.w[count >>> FastBitSet.pot];
 				}
+				//if ((k & (1L << count)) != 0) {
+					int bit = 7 - (offset & 0x7);
+					bytes[offset >> 3] |= ((k >>> count) & 1) << bit;
+				//}
 				count++;
+				offset++;
 			}
 
-			offset = (line * 8 * (row + 1)) - count;
+			offset = (line * 8 * (row + 1));
 		}
 
 		if (switchPixelColor) {
@@ -990,15 +1069,28 @@ public final class JBIG2Bitmap {
 		
 		JBIG2Bitmap slice = new JBIG2Bitmap(width, height, arithmeticDecoder, huffmanDecoder, mmrDecoder);
 
-		int sliceRow = 0, sliceCol = 0;
+/*		int sliceRow = 0, sliceCol = 0;
 		for (int row = y; row < height; row++) {
 			for (int col = x; col < x + width; col++) {
 				//System.out.println("row = "+row +" column = "+col);
-				slice.setPixel(sliceCol, sliceRow, getPixel(col, row));
+				//slice.setPixel(sliceCol, sliceRow, getPixel(col, row));
+				slice.data.set(sliceRow*slice.width + sliceCol, data.get(row*this.width + col));
 				sliceCol++;
 			}
 			sliceCol = 0;
 			sliceRow++;
+		}
+
+		return slice;*/
+		//int sliceRow = 0, sliceCol = 0;
+		int sliceIndx = 0;
+		for (int row = y; row < height; row++) {
+			int indx = row * this.width + x;
+			for (int col = x; col < x + width; col++) {
+				if (data.get(indx)) slice.data.set(sliceIndx);
+				sliceIndx++;
+				indx++;
+			}
 		}
 
 		return slice;
@@ -1024,7 +1116,7 @@ public final class JBIG2Bitmap {
 //		return data.get(row, col) ? 1 : 0;
 //	}
 
-	private void setPixel(int col, int row, BitSet data, int value) {
+	private void setPixel(int col, int row, FastBitSet data, int value) {
 		int index = (row * width) + col;
 
 		data.set(index, value == 1);
@@ -1050,8 +1142,7 @@ public final class JBIG2Bitmap {
 //
 //		this.height = newHeight;
 //		this.data = newData;
-		BitSet newData = new BitSet(newHeight * width);
-
+		FastBitSet newData = new FastBitSet(newHeight * width);
 		for (int row = 0; row < height; row++) {
 			for (int col = 0; col < width; col++) {
 				setPixel(col, row, newData, getPixel(col, row));
@@ -1092,146 +1183,99 @@ public final class JBIG2Bitmap {
 		return image;
 	}
 
+	/**
+	 * Faster BitSet implementation. Does not perfom any bound checks.
+	 *  
+	 * @author Boris von Loesch
+	 *
+	 */
 	static final class FastBitSet {
-		byte[][] bytes;
-
-		int w, h;
+		long[] w;
+		static final int pot = (Long.SIZE == 32) ? 5 : (Long.SIZE == 16) ? 4 : (Long.SIZE == 64) ? 6 : 7;
+		static final int mask = (int) ((-1L) >>> (Long.SIZE-pot));
+		int length;
 		
-		public FastBitSet(int width, int height) {
-			bytes = new byte[height][(width + 7) / 8];
-			this.w = width;
-			this.h = height;
-			//System.out.println("width = "+width+" height = "+height);
+		
+		public FastBitSet(int length) {
+			this.length = length;
+			int wcount = length / Long.SIZE; 
+			if (length % Long.SIZE != 0) wcount++;
+			w = new long[wcount];
+		}
+		
+		public final int size() {
+			return length;
 		}
 
-//		public int getByte(int row, int col) {
-//			
-//			System.out.println("(width + 7) / 8 = " + (width + 7) / 8);
-//			System.out.println("external width = " + width + " external height = " + height);
-//			System.out.println("internal width = " + w + " internal height = " + h);
-//			System.out.println("row = " + row + " column = " + col);
-//			
-//			int offset = col / 8;
-//			int mod = col % 8;
-//
-//			System.out.println("offset = " + offset + " mod = " + mod+" bytes[row].length = "+bytes[row].length);
-//			
-//			if (mod == 0)
-//				return bytes[row][offset];
-//
-//			if(offset == bytes[row].length - 1){
-//				System.out.println("returning");
-//				return ((bytes[row][offset] & 0xFF) >> mod);
-//			}
-//			
-//			int left = ((bytes[row][offset] & 0xFF) >> mod);
-//			int right = ((bytes[row][offset + 1] & 0xFF) << (8 - mod));
-//			
-//			return left | right;
-//		}
-
-//		public void setByte(int row, int col, int bits) {
-//			int offset = col / 8;
-//			int mod = col % 8;
-//
-//			System.out.println("setByte offset = " + offset + " mod = " + mod);
-//			
-//			
-//			if (mod == 0)
-//				bytes[row][offset] = (byte) bits;
-//			else {
-//				int mask = 0xFF >> (8 - mod);
-//				System.out.println("setByte mask = " + mask);
-//				bytes[row][offset] = (byte) ((bytes[row][offset] & mask) | ((bits & 0xFF) << mod));
-//				bytes[row][offset + 1] = (byte) ((bytes[row][offset + 1] & ~mask) | ((bits & 0xFF) >> (8 - mod)));
-//			}
-//		}
-
-		public byte getByte(int row, int col) {
-//			System.out.println("(width + 7) / 8 = " + (width + 7) / 8);
-//			System.out.println("external width = " + width + " external height = " + height);
-//			System.out.println("internal width = " + w + " internal height = " + h);
-//			System.out.println("row = " + row + " column = " + col);
-			
-			int offset = col / 8;
-			int mod = col % 8;
-
-//			System.out.println("offset = " + offset + " mod = " + mod+" bytes[row].length = "+bytes[row].length);
-			
-			if (mod == 0)
-				return bytes[row][offset];
-
-//			if(offset == bytes[row].length - 1){
-//				System.out.println("returning");
-//				return ((bytes[row][offset] & 0xFF) >> mod);
-//			}
-			
-			byte leftMask = (byte) (0xFF >> (8 - mod));
-			byte rightMask = (byte) (0xFF << mod);
-			
-			byte left = (byte) ((bytes[row][offset] & leftMask) << (8 - mod));
-			
-			if(offset + 1 >= bytes[row].length){
-				System.out.println("returning");
-				return left;
+		public void setAll(boolean value) {
+			if (value)
+				for (int i = 0; i<w.length; i++){
+					w[i] = -1L;
+				}
+			else
+				for (int i = 0; i<w.length; i++){
+					w[i] = 0;
+				}
+				
+		}
+		
+		public void set(int start, int end, boolean value) {
+			if (value) {
+				for (int i=start; i<end; i++) {
+					set(i);
+				}
 			}
-			
-			byte right = (byte) ((bytes[row][offset + 1] & rightMask) >> mod);
-			
-			return (byte) (left | right);
-		}
-		
-		public void setByte(int row, int col, byte bits) {
-			int offset = col / 8;
-			int mod = col % 8;
-
-			//System.out.println("setByte offset = " + offset + " mod = " + mod);
-			
-			
-			if (mod == 0)
-				bytes[row][offset] = (byte) bits;
 			else {
-				
-				byte left = (byte) (bits >> mod);
-				byte leftMask = (byte) (0xFF << (8 - mod));
-				
-				bytes[row][offset] &= leftMask;
-				bytes[row][offset] |= left;
-				
-				if(offset + 1 >= bytes[row].length)
-					return;
-				
-				byte right = (byte) (bits << (8 - mod));
-				byte rightMask = (byte) (0xFF >> mod);
-				
-				bytes[row][offset + 1] &= rightMask;
-				bytes[row][offset + 1] |= right;
-				
-//				int mask = 0xFF >> (8 - mod);
-//				System.out.println("setByte mask = " + mask);
-//				bytes[row][offset] = (byte) ((bytes[row][offset] & mask) | ((bits & 0xFF) << mod));
-//				bytes[row][offset + 1] = (byte) ((bytes[row][offset + 1] & ~mask) | ((bits & 0xFF) >> (8 - mod)));
+				for (int i=start; i<end; i++) {
+					clear(i);
+				}				
+			}
+		}
+
+		public void or(int startindex, final FastBitSet set, int setStartIndex, final int length) {
+			final int shift = startindex - setStartIndex;
+			long k = set.w[setStartIndex >> pot];
+			//Cyclic shift
+			k = (k << shift) | (k >>> (Long.SIZE - shift));
+			if ((setStartIndex & mask) + length <= Long.SIZE) {
+				setStartIndex += shift;
+				for (int i=0; i<length; i++) {
+					w[(startindex) >>> pot] |= k & (1L << setStartIndex);
+					setStartIndex++;
+					startindex++;
+				}				
+			}
+			else{
+				for (int i=0; i<length; i++) {
+					if ((setStartIndex & mask) == 0){ 
+						k = set.w[(setStartIndex) >> pot];
+						k = (k << shift) | (k >>> (Long.SIZE - shift));
+					}
+					w[(startindex) >>> pot] |= k & (1L << (setStartIndex+shift));
+					setStartIndex++;
+					startindex++;
+				}
 			}
 		}
 		
-		public void set(int row, int col) {
-			byte bit = (byte) (1 << (col % 8));
-			bytes[row][col / 8] |= bit;
+		public void set(int index, boolean value) {
+			if (value) set(index);
+			else clear(index);
+		}
+		
+		public void set(int index) {
+			int windex = index >>> pot;
+			w[windex] |= (1L<<index);
+		}
+		
+		public void clear(int index) {
+			int windex = index >>> pot;
+			w[windex] &= ~(1L<<index);
 		}
 
-		public void clear(int row, int col) {
-			byte bit = (byte) (1 << (col % 8));
-			bytes[row][col / 8] &= ~bit;
-		}
-
-		public boolean get(int row, int col) {
-			byte bit = (byte) (1 << (col % 8));
-			return (bytes[row][col / 8] & bit) != 0;
-		}
-
-		public void reset(boolean set) {
-			for (int i = 0; i < bytes.length; i++)
-				Arrays.fill(bytes[i], set ? (byte) 0xFF : (byte) 0x00);
-		}
+		public final boolean get(int index) {
+			int windex = index >>> pot;
+			return ((w[windex] & (1L<<index)) != 0);
+		}		
 	}
 }
