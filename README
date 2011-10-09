@@ -1,0 +1,5 @@
+JBIG2-Image-Decoder
+=============================
+
+This is a fork of [JPedal's JBIG2 library](http://www.jpedal.org/support_JBIG.php), 
+which aims to improve the performance of the original code.
