@@ -109,6 +109,11 @@ public class GenericRegionSegment extends RegionSegment {
         
         boolean typicalPredictionGenericDecodingOn = genericRegionFlags.getFlagValue(GenericRegionFlags.TPGDON) != 0;
         int length = segmentHeader.getSegmentDataLength();
+        
+        /*---1 fix MMR ---*/
+    	int bytesRead = 0;
+    	/*- end 1 fix MMR -*/
+
 
         if(length == -1) { 
         	/** 
@@ -133,7 +138,10 @@ public class GenericRegionSegment extends RegionSegment {
         		match2 = 172;
         	}
         	
-        	int bytesRead = 0;
+        	/*--- 2 fix MMR ---*/
+        	//int bytesRead = 0;
+        	/*- end 2 fix MMR -*/
+
     		while(true) {
     			short bite1 = decoder.readByte();
     			bytesRead++;
@@ -154,9 +162,15 @@ public class GenericRegionSegment extends RegionSegment {
         
         JBIG2Bitmap bitmap = new JBIG2Bitmap(regionBitmapWidth, regionBitmapHeight, arithmeticDecoder, huffmanDecoder, mmrDecoder);
         bitmap.clear(0);
-        bitmap.readBitmap(useMMR, template, typicalPredictionGenericDecodingOn, false, null, genericBAdaptiveTemplateX, genericBAdaptiveTemplateY, useMMR ? 0 : length - 18);
+        /*--- 3 fix MMR ---*/
+        	// See 6.2.6 Decoding using MMR coding
+        	// An invocation of the generic region decoding procedure with MMR equal to 1 shall consume an integral
+        	// number of bytes, beginning and ending on a byte boundary. This may involve skipping over some bits in the last byte read.
         
-        
+        	//bitmap.readBitmap(useMMR, template, typicalPredictionGenericDecodingOn, false, null, genericBAdaptiveTemplateX, genericBAdaptiveTemplateY, useMMR ? 0 : length - 18);
+         	bitmap.readBitmap(useMMR, template, typicalPredictionGenericDecodingOn, false, null, genericBAdaptiveTemplateX, genericBAdaptiveTemplateY, useMMR ? bytesRead : length - 18);
+        	
+        /*- end 3 fix MMR -*/
         
         if (inlineImage) {
             PageInformationSegment pageSegment = decoder.findPageSegement(segmentHeader.getPageAssociation());
