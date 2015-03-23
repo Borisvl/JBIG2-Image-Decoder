@@ -61,13 +61,15 @@ A pdf [file](https://github.com/afila/JBIG2-Image-Decoder/blob/master/XeroxWorkC
 
 Reason
 --------------------------------
-See 6.2.6 **Decoding using MMR coding** of [JBIG2 specification](http://www.hlevkin.com/Standards/fcd14492.pdf) for detail.
+I think the reason in the 6.2.6 **Decoding using MMR coding** of [JBIG2 specification](http://www.hlevkin.com/Standards/fcd14492.pdf).
 
 If MMR is 1, the generic region decoding procedure is identical to an MMR (ModifiedModified READ) decoder
 described in ITU-T Recommendation T.6, with the following exceptions:
  An invocation of the generic region decoding procedure with MMR equal to 1 `shall consume an integral
 number of bytes, beginning and ending on a byte boundary`. This may involve skipping over some bits in
 the last byte read.
+
+_Correct me if I wrong..._
 
 Fix
 --------------------------------
