@@ -5,7 +5,7 @@ This project fix bug in MMR decoding in Borisvl/JBIG2-Image-Decoder's fork JPeda
 Description
 -----------------------------
 A pdf [file](https://github.com/afila/JBIG2-Image-Decoder/blob/master/XeroxWorkCentre5230A_Huffman.pdf)
-(version 1.4) produced by Xerox WorkCentre 5230(A) with JBIG2 compression (MMR) give error, when attept to decode an [image  stream](https://github.com/afila/JBIG2-Image-Decoder/blob/master/XeroxWorkCentre5230A_Huffman.jb2) from this file:
+(version 1.4) produced by Xerox WorkCentre 5230(A) with JBIG2 compression (MMR) give an error, when attept to decode an [image  stream](https://github.com/afila/JBIG2-Image-Decoder/blob/master/XeroxWorkCentre5230A_Huffman.jb2) from this file:
 
     Exception in thread "AWT-EventQueue-0" java.lang.ArrayIndexOutOfBoundsException: 30447
 	    at org.jpedal.jbig2.io.StreamReader.readByte(StreamReader.java:86)
