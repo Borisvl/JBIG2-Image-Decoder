@@ -90,7 +90,7 @@ public class JBIG2StreamDecoder {
 
 	private MMRDecoder mmrDecoder;
 	
-	public static boolean debug = false;
+	public static boolean debug = true;// DEBUG	DEBUG DEBUG DEBUG
 
 	public void movePointer(int i){
 		reader.movePointer(i);
